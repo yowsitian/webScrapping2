@@ -12,8 +12,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-driver = webdriver.Chrome(ChromeDriverManager().install())
+options = webdriver.ChromeOptions()
+options.add_argument("headless")
 
+driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
 urlList = [ 
     {'id': 'theStar', 'link': 'https://www.thestar.com.my/search/?q='},
     {'id': 'borneoPost','link': 'https://www.theborneopost.com/search_gcse/?q='},
@@ -77,18 +79,21 @@ def scrapeWeb(url):
             article = BeautifulSoup(r.content, "html.parser")
             body = article.find('div',attrs={"class": "entry-content"})   
             body = body.findAll('p')
-        
-        arrOutput = stopWords or wordClassifier
 
-        if arrOutput:
+        if stopWords or wordClassifier:
             clean = re.compile('<.*?>')
             for n in np.arange(0,len(body)):
                 body[n] = re.sub(clean, ' ',str(body[n]))
 
         if len(body) != 0:
             for n in np.arange(0,len(body)):
-                if arrOutput:
+                if wordClassifier:
                     body[n] = body[n].replace(",","")
+                    if '\xa0' in body[n]:
+                        tempArr = body[n].split()
+                        for i in tempArr:
+                            resultArr.append(i) 
+                elif stopWords:
                     tempArr = body[n].split()
                     for i in tempArr:
                         resultArr.append(i) 
@@ -97,6 +102,6 @@ def scrapeWeb(url):
 
     print("Done scraping.")   
 
-    if arrOutput:
+    if stopWords or wordClassifier:
         return resultArr
     return result
